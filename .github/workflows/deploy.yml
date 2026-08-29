@@ -1,0 +1,61 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  STACK_DIR: /home/aau/Desktop/project3
+
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set image name
+        run: echo "IMAGE=ghcr.io/$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')/skills-utilization" >> $GITHUB_ENV
+
+      - name: Log in to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build image
+        run: docker build -t $IMAGE:latest -t $IMAGE:${{ github.sha }} .
+
+      - name: Push image to GHCR
+        run: |
+          docker push $IMAGE:latest
+          docker push $IMAGE:${{ github.sha }}
+
+      - name: Check Vault is unsealed
+        run: |
+          SEALED=$(docker exec -e VAULT_ADDR=http://127.0.0.1:8200 \
+            skills-vault vault status -format=json | jq -r '.sealed')
+          if [ "$SEALED" != "false" ]; then
+            echo "Vault is sealed. Unseal it before deploying."
+            exit 1
+          fi
+          echo "Vault is unsealed."
+
+      - name: Fetch secrets from Vault
+        working-directory: ${{ env.STACK_DIR }}
+        run: ./vault.sh
+
+      - name: Pull and deploy
+        working-directory: ${{ env.STACK_DIR }}
+        run: |
+          docker compose pull app
+          docker compose up -d
+
+      - name: Verify deployment
+        working-directory: ${{ env.STACK_DIR }}
+        run: |
+          sleep 8
+          docker compose ps
+          curl -fsS -o /dev/null -w "App responded: %{http_code}\n" http://localhost:5000
