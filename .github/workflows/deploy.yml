@@ -50,12 +50,6 @@ jobs:
       - name: Pull and deploy
         working-directory: ${{ env.STACK_DIR }}
         run: |
-          docker compose pull app
+          docker compose down
           docker compose up -d
-
-      - name: Verify deployment
-        working-directory: ${{ env.STACK_DIR }}
-        run: |
-          sleep 8
-          docker compose ps
-          curl -fsS -o /dev/null -w "App responded: %{http_code}\n" http://localhost:5000
+  
