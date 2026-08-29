@@ -1,0 +1,10 @@
+Unable to find image 'hadolint/hadolint:latest' locally
+latest: Pulling from hadolint/hadolint
+83cf56c1bf8f: Pulling fs layer
+83cf56c1bf8f: Download complete
+83cf56c1bf8f: Pull complete
+3c27a54fbbc3: Download complete
+Digest: sha256:32dac94127fd60b7b7e3fbfc65e1383b9b5e25c9bfd7b8536de7a539fe68a12d
+Status: Downloaded newer image for hadolint/hadolint:latest
+-:10 DL3013 [1m[93mwarning[0m: Pin versions in pip. Instead of `pip install <package>` use `pip install <package>==<version>` or `pip install --requirement <requirements file>`
+-:17 DL3066 [92minfo[0m: Non-numeric user-id may not be resolvable by host system

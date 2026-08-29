@@ -1,0 +1,33 @@
+Unable to find image 'trufflesecurity/trufflehog:latest' locally
+latest: Pulling from trufflesecurity/trufflehog
+4f4fb700ef54: Pulling fs layer
+4f4fb700ef54: Pulling fs layer
+fbb7b6f067ab: Pulling fs layer
+f7ee36c9aa34: Pulling fs layer
+99855ed812e7: Pulling fs layer
+4b6a87546921: Pulling fs layer
+4f4fb700ef54: Already exists
+4f4fb700ef54: Pull complete
+f7ee36c9aa34: Download complete
+f7ee36c9aa34: Pull complete
+4b6a87546921: Download complete
+fbb7b6f067ab: Download complete
+fbb7b6f067ab: Pull complete
+99855ed812e7: Download complete
+4b6a87546921: Pull complete
+99855ed812e7: Pull complete
+Digest: sha256:deb2af10659a488a14d262a323addcde099d99827a1cf1dc4e93c17915c39f08
+Status: Downloaded newer image for trufflesecurity/trufflehog:latest
+🐷🔑🐷  TruffleHog. Unearth your secrets. 🐷🔑🐷
+
+2026-08-29T11:14:23Z	info-0	trufflehog	running source	{"source_manager_worker_id": "MsBcz", "with_units": true}
+Found unverified result 🐷🔑❓
+Detector Type: Github
+Decoder Type: BASE64
+Raw result: ghs_15368_eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9
+Rotation_guide: https://howtorotate.com/docs/tutorials/github/
+Version: 2
+File: /src/.git/config
+Line: 12
+
+2026-08-29T11:14:23Z	info-0	trufflehog	finished scanning	{"chunks": 135, "bytes": 367572, "verified_secrets": 0, "unverified_secrets": 1, "scan_duration": "304.25461ms", "trufflehog_version": "3.97.1", "verification_caching": {"Hits":0,"Misses":2,"HitsWasted":0,"AttemptsSaved":0,"VerificationTimeSpentMS":537}}
