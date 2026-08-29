@@ -1,0 +1,95 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'security-reports/**'
+  workflow_dispatch:
+
+jobs:
+  security-scan:
+    runs-on: self-hosted
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Prepare report directory
+        run: |
+          mkdir -p security-reports
+          echo "SCAN_DATE=$(date '+%Y-%m-%d %H:%M:%S')" >> $GITHUB_ENV
+
+      - name: Bandit — Python security scan
+        continue-on-error: true
+        run: |
+          docker run --rm -v "$PWD:/src:ro" -w /src python:3.12-slim \
+            sh -c "pip install -q bandit && bandit -r . -f txt --exclude ./alembic" \
+            > security-reports/bandit.txt 2>&1 || true
+          echo "BANDIT_EXIT=$?" >> $GITHUB_ENV
+
+      - name: Hadolint — Dockerfile lint
+        continue-on-error: true
+        run: |
+          docker run --rm -i hadolint/hadolint hadolint - \
+            < Dockerfile > security-reports/hadolint.txt 2>&1 || true
+
+      - name: TruffleHog — secret scan
+        continue-on-error: true
+        run: |
+          docker run --rm -v "$PWD:/src:ro" trufflesecurity/trufflehog:latest \
+            filesystem /src --no-update \
+            > security-reports/trufflehog.txt 2>&1 || true
+
+      - name: Build summary report
+        run: |
+          {
+            echo "# Security Scan Report"
+            echo ""
+            echo "**Scan date:** ${SCAN_DATE}"
+            echo "**Commit:** \`${GITHUB_SHA}\`"
+            echo "**Triggered by:** ${GITHUB_ACTOR}"
+            echo ""
+            echo "---"
+            echo ""
+            echo "## 1. Bandit — Python security issues"
+            echo ""
+            echo '```'
+            tail -n 100 security-reports/bandit.txt
+            echo '```'
+            echo ""
+            echo "## 2. Hadolint — Dockerfile issues"
+            echo ""
+            echo '```'
+            if [ -s security-reports/hadolint.txt ]; then
+              cat security-reports/hadolint.txt
+            else
+              echo "No issues found."
+            fi
+            echo '```'
+            echo ""
+            echo "## 3. TruffleHog — exposed secrets"
+            echo ""
+            echo '```'
+            tail -n 100 security-reports/trufflehog.txt
+            echo '```'
+          } > security-reports/SECURITY_REPORT.md
+
+          echo "Report written."
+          cat security-reports/SECURITY_REPORT.md
+
+      - name: Commit report to repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add security-reports/
+          if git diff --staged --quiet; then
+            echo "No changes to the report."
+          else
+            git commit -m "Security scan report — ${GITHUB_SHA:0:7}"
+            git push
+          fi
